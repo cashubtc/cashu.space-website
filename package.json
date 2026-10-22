@@ -12,7 +12,7 @@
   "dependencies": {
     "motion": "^13.1.1",
     "motion-plus": "npm:@motionplus/core@^2.12.0",
-    "next": "16.2.6",
+    "next": "16.4.1",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "thinking-orbs": "^0.3.1"
@@ -23,7 +23,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.2.6",
+    "eslint-config-next": "16.4.1",
     "geist": "^1.7.1",
     "opentype.js": "^2.0.0",
     "pngjs": "^7.0.0",
