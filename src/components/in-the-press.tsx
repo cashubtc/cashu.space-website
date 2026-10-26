@@ -37,12 +37,19 @@ type Story = {
   title: string;
   image: string;
   imageAlt: string;
-  logo: string;
+  logo?: string;
   publication: string;
   logoClass?: string;
 };
 
 const STORIES: Story[] = [
+  {
+    href: "https://cryptobriefing.com/ducat-unit-stablecoin-cashu-turbo-unit/",
+    title: "Ducat brings its UNIT stablecoin to Cashu ecash as Turbo UNIT",
+    image: "/press/cryptobriefing-ducat.png",
+    imageAlt: "A US hundred-dollar bill dissolving into green binary digits",
+    publication: "Crypto Briefing",
+  },
   {
     href: "https://www.forbes.com/sites/digital-assets/2024/02/14/bypassing-financial-gatekeepers-with-bitcoin/",
     title: "Bypassing financial gatekeepers with Bitcoin",
@@ -373,13 +380,17 @@ export default function InThePress() {
                 {/* Static SVG wordmark as a plain <img> so Next's optimizer
                     (which blocks SVG) stays out of the path; flattened to Ink
                     by CSS (--press-mark). */}
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={story.logo}
-                  alt={story.publication}
-                  className={`press-logo${story.logoClass ? ` ${story.logoClass}` : ""}`}
-                  loading="lazy"
-                />
+                {story.logo ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={story.logo}
+                    alt={story.publication}
+                    className={`press-logo${story.logoClass ? ` ${story.logoClass}` : ""}`}
+                    loading="lazy"
+                  />
+                ) : (
+                  <span className="text-lg font-semibold">{story.publication}</span>
+                )}
                 <NewTabHint />
               </a>
             ))}
