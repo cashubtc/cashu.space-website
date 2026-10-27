@@ -103,32 +103,17 @@ bytes for the same face. Discard the diff unless you meant to change something.
 
 ## Deploying
 
-This repo deploys to a **personal Vercel project**. It is not what serves
-`cashu.space` today — that domain belongs to the Cashu team and currently runs
-an older Pages Router app on Fly.io. The team will point the domain here when
-they are ready.
+The GHCR image workflow builds `main` for Kubernetes using the repository's
+`MOTION_TOKEN` Actions secret for the private Motion+ package. The token is
+passed as a BuildKit secret. It publishes immutable commit-tagged images and
+moves the `production` tag only when the build is still the main branch head.
+The package must be public for anonymous pulls, or Kubernetes needs pull
+credentials. The separate infrastructure repository tracks the image digest in
+Git and Argo CD deploys changes after the image update PR is merged.
 
-That gap has one consequence worth knowing about, because it is not obvious
-from reading the code. `src/lib/site-url.ts` resolves `SITE_URL` to
-`https://cashu.space` whenever `VERCEL_ENV === "production"`, and
-`IS_PRODUCTION` follows the same flag. So a *production* deploy of the personal
-project will:
-
-- emit canonical URLs and Open Graph tags pointing at `cashu.space`, a site it
-  is not, and
-- emit a `robots.txt` that allows indexing and declares `host: cashu.space`.
-
-Preview deploys are fine — they disallow indexing and resolve `SITE_URL` to
-their own `VERCEL_URL`. Only the production environment of the staging project
-has this shape.
-
-Set `NEXT_PUBLIC_SITE_URL` in the Vercel project to override the host. It takes
-precedence over everything else and is the intended escape hatch. Note that it
-changes the URLs only; the indexing decision is `IS_PRODUCTION`, which is a
-separate line in the same file.
-
-None of this needs solving before the cutover. It needs solving before the
-staging deploy gets indexed.
+Production builds use `NEXT_PUBLIC_SITE_URL=https://cashu.space` and
+`VERCEL_ENV=production`, which controls canonical URLs and indexing. The personal
+Vercel preview project is separate from the Kubernetes deployment.
 
 ## Things that will surprise you
 
@@ -154,17 +139,3 @@ staging deploy gets indexed.
 - **The homepage hero is centred and nothing else is.** It is the one
   deliberate departure from the left-aligned editorial register, and it is not
   a bug to be fixed for consistency.
-
-### Kubernetes staging image
-
-The `Build staging image` workflow builds pushes to `main` and publishes
-`ghcr.io/cashubtc/cashu-space-website:staging`. It needs the repository Actions
-secret `MOTION_TOKEN` for the private Motion+ package; it is supplied to Docker
-as a BuildKit build secret and is not an image build argument. The GHCR package
-must be public for anonymous Kubernetes pulls, or the cluster needs pull credentials.
-
-This image is **for staging only**: Next.js prerenders metadata and robots rules
-at build time with `NEXT_PUBLIC_SITE_URL=https://staging.cashu.space` and
-`VERCEL_ENV=preview`, so it uses the staging canonical URL and disallows indexing.
-Production needs a separately configured build. The infrastructure repository
-pins the image digest and controls deployment; a moving tag alone does not deploy.

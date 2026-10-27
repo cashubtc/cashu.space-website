@@ -1,4 +1,4 @@
-name: Build staging image
+name: Build production image
 on:
   push:
     branches: [main]
@@ -7,7 +7,7 @@ permissions:
   contents: read
   packages: write
 concurrency:
-  group: cashu-space-staging-image
+  group: cashu-space-production-image
   cancel-in-progress: false
 jobs:
   build:
@@ -37,11 +37,11 @@ jobs:
           platforms: linux/amd64
           tags: ghcr.io/cashubtc/cashu-space-website:sha-${{ github.sha }}
           build-args: |
-            NEXT_PUBLIC_SITE_URL=https://staging.cashu.space
-            VERCEL_ENV=preview
+            NEXT_PUBLIC_SITE_URL=https://cashu.space
+            VERCEL_ENV=production
           secrets: |
             MOTION_TOKEN=${{ secrets.MOTION_TOKEN }}
-      - name: Publish current main as staging
+      - name: Publish current main as production
         env:
           GH_TOKEN: ${{ github.token }}
           IMAGE: ghcr.io/cashubtc/cashu-space-website
@@ -51,7 +51,7 @@ jobs:
           set -eu
           current=$(gh api repos/cashubtc/cashu.space-website/commits/main --jq .sha)
           if [ "$current" != "$COMMIT" ]; then
-            echo "A newer main commit exists; leaving the staging tag unchanged."
+            echo "A newer main commit exists; leaving the production tag unchanged."
             exit 0
           fi
-          docker buildx imagetools create --tag "$IMAGE:staging" "$IMAGE@$DIGEST"
+          docker buildx imagetools create --tag "$IMAGE:production" "$IMAGE@$DIGEST"
