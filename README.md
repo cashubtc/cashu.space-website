@@ -154,3 +154,17 @@ staging deploy gets indexed.
 - **The homepage hero is centred and nothing else is.** It is the one
   deliberate departure from the left-aligned editorial register, and it is not
   a bug to be fixed for consistency.
+
+### Kubernetes staging image
+
+The `Build staging image` workflow builds pushes to `main` and publishes
+`ghcr.io/cashubtc/cashu-space-website:staging`. It needs the repository Actions
+secret `MOTION_TOKEN` for the private Motion+ package; it is supplied to Docker
+as a BuildKit build secret and is not an image build argument. The GHCR package
+must be public for anonymous Kubernetes pulls, or the cluster needs pull credentials.
+
+This image is **for staging only**: Next.js prerenders metadata and robots rules
+at build time with `NEXT_PUBLIC_SITE_URL=https://staging.cashu.space` and
+`VERCEL_ENV=preview`, so it uses the staging canonical URL and disallows indexing.
+Production needs a separately configured build. The infrastructure repository
+pins the image digest and controls deployment; a moving tag alone does not deploy.
