@@ -1,0 +1,57 @@
+name: Build production image
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+  packages: write
+concurrency:
+  group: cashu-space-production-image
+  cancel-in-progress: false
+jobs:
+  build:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Require Motion+ token
+        env:
+          MOTION_TOKEN: ${{ secrets.MOTION_TOKEN }}
+        run: test -n "$MOTION_TOKEN" || { echo 'MOTION_TOKEN is required for the private Motion+ package'; exit 1; }
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push immutable image
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          platforms: linux/amd64
+          tags: ghcr.io/cashubtc/cashu-space-website:sha-${{ github.sha }}
+          build-args: |
+            NEXT_PUBLIC_SITE_URL=https://cashu.space
+            VERCEL_ENV=production
+          secrets: |
+            MOTION_TOKEN=${{ secrets.MOTION_TOKEN }}
+      - name: Publish current main as production
+        env:
+          GH_TOKEN: ${{ github.token }}
+          IMAGE: ghcr.io/cashubtc/cashu-space-website
+          DIGEST: ${{ steps.build.outputs.digest }}
+          COMMIT: ${{ github.sha }}
+        run: |
+          set -eu
+          current=$(gh api repos/cashubtc/cashu.space-website/commits/main --jq .sha)
+          if [ "$current" != "$COMMIT" ]; then
+            echo "A newer main commit exists; leaving the production tag unchanged."
+            exit 0
+          fi
+          docker buildx imagetools create --tag "$IMAGE:production" "$IMAGE@$DIGEST"

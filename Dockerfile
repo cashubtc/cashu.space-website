@@ -6,7 +6,11 @@ FROM node:${NODE_VERSION}-slim AS build
 
 WORKDIR /app
 
-ENV NODE_ENV=production
+ARG NEXT_PUBLIC_SITE_URL=https://cashu.space
+ARG VERCEL_ENV=production
+ENV NODE_ENV=production \
+    NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL} \
+    VERCEL_ENV=${VERCEL_ENV}
 
 COPY .npmrc package-lock.json package.json ./
 RUN --mount=type=secret,id=MOTION_TOKEN,required=true \
